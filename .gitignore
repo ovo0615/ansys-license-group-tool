@@ -1,0 +1,23 @@
+# Python 虛擬環境（uv 管理）
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ansys License 授權檔案（含客戶機密，不推送至 GitHub）
+*.lic
+# 授權相關 txt 檔（視情況決定）
+Ansys_License*.txt
+
+# uv lock（建議追蹤以確保重現性，如需排除請取消以下注解）
+# uv.lock
+
+# Windows 暫存
+Thumbs.db
+desktop.ini
+*.tmp
+
+# 備份檔
+*.bak_*
+*.bak
