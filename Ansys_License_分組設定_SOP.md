@@ -8,7 +8,7 @@
 
 ## 事前準備
 
-- [ ] License Server 主機的系統管理員權限（Windows 需系統管理員；Linux 需 root）
+- [ ] 授權管理主機的系統管理員權限（Windows 需系統管理員；Linux 需 root）
 - [ ] 已知道所有 Feature 名稱（例如 `hfss`、`ansys`、`aim_acs` 等，可從現有 `ansyslmd.lic` 內的 `FEATURE` / `INCREMENT` 行取得，或參考各產品授權對照表）
 - [ ] 已列出要分組的「使用者清單」或「主機清單」（帳號需與登入系統的使用者名稱一致，區分大小寫）
 - [ ] 預留 5–10 分鐘的服務中斷時間（重啟 License Manager 時，正在使用授權的使用者會短暫斷線）
