@@ -45,7 +45,7 @@
 ### 方式一：從 GitHub Release 下載 ZIP（推薦）
 
 1. 前往 GitHub Releases 頁面，下載 `AnsysLicenseGroupTool_vX.X.X.zip`
-2. 解壓至任意資料夾（例如 `D:\Tools\AnsysLicenseTool\`）
+2. 解壓至任意資料夾（例如 `C:\Tools\AnsysLicenseTool\`）
 3. 雙擊執行 `run_tool.bat`
 4. 首次啟動會自動建立 `.venv` 並安裝套件（需網路）
 
