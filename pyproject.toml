@@ -1,7 +1,7 @@
 [project]
 name = "ansys-license-group-tool"
 version = "1.0.0"
-description = "Ansys License 分組設定 GUI 工具 — 此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供"
+description = "Ansys License 分組設定 GUI 工具"
 requires-python = ">=3.10"
 dependencies = [
     "ttkbootstrap>=1.10.1",

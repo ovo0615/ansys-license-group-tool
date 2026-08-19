@@ -1,5 +1,4 @@
 ﻿# Ansys License 分組設定工具 — 啟動腳本
-# 此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供
 $ErrorActionPreference = "Stop"
 
 # ── UTF-8 Console 編碼設定 ──────────────────────────────────
@@ -11,7 +10,6 @@ $OutputEncoding = $utf8
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Ansys License 分組設定工具" -ForegroundColor Cyan
-Write-Host "  此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供" -ForegroundColor DarkGray
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 

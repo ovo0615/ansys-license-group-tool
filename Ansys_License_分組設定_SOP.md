@@ -143,6 +143,3 @@ lmutil lmstat -a -c ansyslmd.lic
 | -38 | 使用者/主機被列在 `EXCLUDE` 名單 | 從 EXCLUDE 移除 |
 | -39 | 使用者/主機沒被列在必要的 `INCLUDE` 名單 | 加入 INCLUDE |
 | -194 | 超過 `MAX` 設定的可用數量上限 | 確認 MAX 數值或群組成員是否過多 |
-
----
-此工具由 虎門科技資深技術工程師 Jeff Hong 洪敬傑提供

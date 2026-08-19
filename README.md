@@ -1,7 +1,5 @@
 # Ansys License 分組設定工具
 
-> 此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供
-
 ---
 
 ## 功能簡介
@@ -158,10 +156,6 @@ License_Group_Tooklit\
 ├── README.md                     # 本說明文件
 └── Ansys_License_分組設定_SOP.md  # 原始 SOP 文件
 ```
-
----
-
-此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供
 
 ---
 
