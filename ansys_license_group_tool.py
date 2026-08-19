@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Ansys License 分組設定 GUI 工具
-此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供
 
 依據：Ansys_License_分組設定_SOP.md
 功能：協助使用者透過圖形介面完成 ansyslmd.opt 分組設定
@@ -241,13 +240,6 @@ class App(tbs.Window):
             font=("微軟正黑體", 15, "bold"),
             bootstyle="light",
         ).pack(side=LEFT)
-
-        tbs.Label(
-            header,
-            text="此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供",
-            font=self.FONT_SMALL,
-            bootstyle="secondary",
-        ).pack(side=RIGHT, padx=8)
 
         # Notebook（四頁籤）
         self.nb = tbs.Notebook(self, bootstyle="dark")

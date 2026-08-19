@@ -1,5 +1,4 @@
 ﻿# generate_release.ps1 — 產生 Release ZIP 與 SHA256SUMS.txt
-# 此工具由虎門科技資深技術工程師 Jeff Hong 洪敬傑提供
 #
 # 使用方式：
 #   powershell -ExecutionPolicy Bypass -File generate_release.ps1 [-Version "1.0.0"]
