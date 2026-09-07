@@ -1,10 +1,20 @@
 [project]
 name = "ansys-license-group-tool"
-version = "1.0.0"
+version = "1.1.0"
 description = "Ansys License 分組設定 GUI 工具"
 requires-python = ">=3.10"
 dependencies = [
     "ttkbootstrap>=1.10.1",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
 [tool.uv]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# tests/conftest.py 會把專案根目錄放進 sys.path，測試才找得到 ansys_opt
+pythonpath = ["."]

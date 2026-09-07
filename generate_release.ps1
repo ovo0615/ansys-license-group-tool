@@ -47,6 +47,35 @@ foreach ($file in $includeFiles) {
     }
 }
 
+# 核心邏輯套件。少了它主程式匯入就會失敗，所以這裡不容許略過。
+$includeDirs = @("ansys_opt")
+
+foreach ($dir in $includeDirs) {
+    $src = Join-Path $scriptDir $dir
+    if (-not (Test-Path $src)) {
+        throw "找不到必要的資料夾 $dir，Release 會無法執行。請確認在專案根目錄下執行本腳本。"
+    }
+    Copy-Item $src (Join-Path $releaseDir $dir) -Recurse `
+        -Exclude "__pycache__", "*.pyc"
+    # Copy-Item -Exclude 不會過濾子資料夾，這裡再掃一次
+    Get-ChildItem (Join-Path $releaseDir $dir) -Recurse -Force `
+        -Include "__pycache__" -Directory |
+        Remove-Item -Recurse -Force
+    Write-Host "  + $dir\" -ForegroundColor Green
+}
+
+# 打包前確認主程式要用到的檔案都在
+$mustExist = @(
+    "ansys_license_group_tool.py",
+    "ansys_opt\__init__.py",
+    "ansys_opt\data\feature_map.json"
+)
+foreach ($item in $mustExist) {
+    if (-not (Test-Path (Join-Path $releaseDir $item))) {
+        throw "Release 內容缺少 $item，請檢查後重新產生。"
+    }
+}
+
 # 打包 ZIP
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Compress-Archive -Path "$releaseDir\*" -DestinationPath $zipPath
