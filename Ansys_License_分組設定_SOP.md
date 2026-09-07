@@ -30,6 +30,18 @@ options file 檔名固定為 **`ansyslmd.opt`**，若資料夾內沒有這個檔
 
 > 提醒：路徑中的 `license_files` 資料夾要跟你目前 `ansyslmd.lic` 所在的資料夾一致，確保 License Manager 讀取的是同一份設定。
 
+**放在預設位置就會被自動讀取，不需要去動 `ansyslmd.lic`。**
+
+只有在 opt 檔必須放到別的資料夾（例如與授權檔分開管理）時，才要在 `ansyslmd.lic` 的
+**第二行**（`SERVER` 行的下一行）加入 `options=` 指定路徑：
+
+```
+options="C:\LicenseAdmin\ansyslmd.opt"
+```
+
+路徑含空白必須用雙引號包起來。兩種做法效果相同，**但能不動 `ansyslmd.lic` 就不要動**
+——手動編輯授權檔是 `-13`（讀不到 SERVER 行）最常見的來源。
+
 ## Step 2：備份現有設定
 
 修改前務必備份，避免改壞導致所有人都無法取用授權：
