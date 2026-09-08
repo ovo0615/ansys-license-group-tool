@@ -1,0 +1,155 @@
+{
+  "_meta": {
+    "purpose": "Ansys 授權 Feature（increment）代碼對應到人看得懂的產品名稱。",
+    "authoritative_source": "Ansys 原廠的 Product to License Feature Mapping 文件（原廠入口網站 → Downloads → Installation and Licensing Help Tutorials → 展開 Licensing → Product to License feature mapping archive）。那份文件才是完整且權威的對照表。",
+    "scope": "這份種子檔只收錄公開資料中可查證的常見代碼，刻意不追求完整。找不到的代碼工具會原樣顯示，不會猜。",
+    "confidence": "high = 公開文件明確寫出的對應；medium = 公開討論與經銷商技術文章中一致的說法，建議自行核對。",
+    "user_override": "要補齊自家授權的代碼，請匯入 CSV（欄位：feature,product[,category]）。匯入的內容會覆蓋這份種子檔，且存在使用者設定目錄，不進版控。",
+    "updated": "2026-09"
+  },
+  "features": {
+    "ansys": {
+      "product": "Ansys Mechanical Enterprise",
+      "category": "結構",
+      "confidence": "high"
+    },
+    "mech_1": {
+      "product": "Ansys Mechanical Pro",
+      "category": "結構",
+      "confidence": "high"
+    },
+    "mech_2": {
+      "product": "Ansys Mechanical Premium",
+      "category": "結構",
+      "confidence": "high"
+    },
+    "meba": {
+      "product": "Ansys Mechanical Enterprise Solver（Mechanical 批次求解）",
+      "category": "結構",
+      "confidence": "high"
+    },
+    "preppost": {
+      "product": "Ansys Mechanical Enterprise PrepPost（前後處理）",
+      "category": "結構",
+      "confidence": "high"
+    },
+    "dsdxm": {
+      "product": "Ansys DesignXplorer（隨 Mechanical Pro 等產品配發）",
+      "category": "結構",
+      "confidence": "medium"
+    },
+    "advanced_meshing": {
+      "product": "Ansys 進階網格（2021 R1 及更早版次才使用）",
+      "category": "結構",
+      "confidence": "medium"
+    },
+    "dsstruct": {
+      "product": "Ansys DesignSpace Structural",
+      "category": "結構",
+      "confidence": "medium"
+    },
+
+    "cfd_preppost": {
+      "product": "Ansys CFD PrepPost（2021 R2 起 ICEM CFD 預設使用這個增量）",
+      "category": "流體",
+      "confidence": "high"
+    },
+    "cfd_solve_level1": {
+      "product": "Ansys CFD 求解 Level 1",
+      "category": "流體",
+      "confidence": "high"
+    },
+    "cfd_solve_level2": {
+      "product": "Ansys CFD 求解 Level 2",
+      "category": "流體",
+      "confidence": "high"
+    },
+    "cfd_base": {
+      "product": "Ansys CFD 基礎增量",
+      "category": "流體",
+      "confidence": "medium"
+    },
+
+    "anshpc": {
+      "product": "Ansys HPC（單顆核心為單位）",
+      "category": "HPC",
+      "confidence": "high",
+      "caution": "與 anshpc_pack 不可混用。"
+    },
+    "anshpc_pack": {
+      "product": "Ansys HPC Pack（以每位使用者為單位分配）",
+      "category": "HPC",
+      "confidence": "high",
+      "caution": "與 anshpc 不可混用；Ansys LS-DYNA 用不到這個增量。"
+    },
+
+    "dysmp": {
+      "product": "Ansys LS-DYNA MPP（LS-DYNA 的多核心運算）",
+      "category": "LS-DYNA",
+      "confidence": "high",
+      "caution": "LS-DYNA 的核心數靠這個增量，不吃 anshpc / anshpc_pack。"
+    },
+    "dynapp": {
+      "product": "Ansys LS-DYNA PrepPost",
+      "category": "LS-DYNA",
+      "confidence": "high"
+    },
+
+    "electronics_desktop": {
+      "product": "Ansys Electronics Desktop（開啟一個 AEDT 視窗）",
+      "category": "電磁",
+      "confidence": "high",
+      "caution": "較新的授權把所有電磁產品收斂到這個增量之下。"
+    },
+    "hfss_gui": {
+      "product": "Ansys AEDT — 新增 HFSS 設計",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "maxwell_gui": {
+      "product": "Ansys AEDT — 新增 Maxwell 設計",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "electronics2d_gui": {
+      "product": "Ansys AEDT — 新增 2D 設計",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "electronics3d_gui": {
+      "product": "Ansys AEDT — 新增 3D 設計",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "simplorer_gui": {
+      "product": "Ansys AEDT — 新增 Twin Builder／Simplorer 設計",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "simplorer_modelica": {
+      "product": "Ansys Twin Builder — Modelica 函式庫",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "hfss_solve": {
+      "product": "Ansys HFSS 求解",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "optimetrics": {
+      "product": "Ansys Optimetrics（最佳化與參數掃描）",
+      "category": "電磁",
+      "confidence": "high"
+    },
+    "hfss": {
+      "product": "Ansys HFSS（2019 之前各工具獨立命名時期的增量）",
+      "category": "電磁",
+      "confidence": "medium"
+    },
+    "siwave": {
+      "product": "Ansys SIwave",
+      "category": "電磁",
+      "confidence": "medium"
+    }
+  }
+}

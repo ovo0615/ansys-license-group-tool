@@ -1,0 +1,32 @@
+# Ansys Electronics 系列的 Feature 代碼對照表（可用「匯入對照表 CSV…」載入）
+# 權威來源是 Ansys 原廠的 Product to License Feature Mapping 文件；
+# 那份文件不進本版控（屬原廠內容）。這份是依公開資料整理的常用代碼
+# 套用前請自行與原廠對照表核對一次。
+# 註解行不含逗號才會被略過 因此本檔的說明一律不使用逗號。
+#
+# 刻意未收錄（所屬產品尚未核實 工具會顯示「未收錄」）：
+#   GFD_Creator / Mesh_Viewer / Process_Configurator
+#   Tech_Viewer / Techfile_Converter
+feature,product,category
+electronics_desktop,Ansys Electronics Desktop（AEDT 主框架）,電子
+electronics2d_gui,AEDT 2D 編輯器（Maxwell 2D／Q2D）,電子
+electronics3d_gui,AEDT 3D 編輯器（HFSS／Maxwell 3D／Q3D／Icepak）,電子
+electronicsckt_gui,AEDT 電路編輯器（Circuit／Nexxim）,電子
+elec_solve_hfss,HFSS 求解席次,電子
+elec_solve_siwave,SIwave 求解席次,電子
+elec_solve_q3d,Q3D Extractor 求解席次,電子
+elec_solve_icepak,Icepak 求解席次,電子
+elec_solve_maxwell,Maxwell 3D 求解席次,電子
+elec_solve_2d,2D 求解席次（Maxwell 2D／Q2D）,電子
+elec_solve_level1,Electronics 求解席次 Level 1,電子
+elec_solve_level2,Electronics 求解席次 Level 2,電子
+elec_solve_level3,Electronics 求解席次 Level 3,電子
+siwave_level1,SIwave 功能等級 1,電子
+pemag,PeMag 磁性元件設計,電子
+pexprt,PExprt 磁性元件設計,電子
+simplorer_LibSMPS,Twin Builder／Simplorer 電源轉換元件庫,系統
+alinks_gui,Ansys Links（MCAD／ECAD 介接）,介接
+a_spaceclaim_dirmod,SpaceClaim Direct Modeler,幾何
+a_spaceclaim_catv5,SpaceClaim CATIA V5 資料介接,幾何
+rdacis,ACIS（SAT）幾何讀取器,幾何
+rdpara,Parasolid（x_t）幾何讀取器,幾何
