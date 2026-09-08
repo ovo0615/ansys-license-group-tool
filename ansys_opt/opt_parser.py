@@ -20,19 +20,37 @@ from .model import (
     OptDocument,
 )
 
-_EXPDATE_RE = re.compile(r"^([^:]+):EXPDATE=(.+)$", re.IGNORECASE)
+# feature 後面可以掛一串 :KEY=VALUE，FlexNet 實務上會用到 VERSION 與 EXPDATE
+_QUALIFIER_RE = re.compile(r":(VERSION|EXPDATE)=", re.IGNORECASE)
 
 
-def _split_feature(token: str) -> tuple[str, str]:
-    """把 hfss:EXPDATE=31-dec-2026 拆成 ("hfss", "31-dec-2026")。"""
-    match = _EXPDATE_RE.match(token)
-    if match:
-        return match.group(1), match.group(2)
-    return token, ""
+def split_feature_token(token: str) -> tuple[str, str, str]:
+    """拆出 (feature, version, expdate)。
+
+    hfss:EXPDATE=31-dec-2026            -> ("hfss", "", "31-dec-2026")
+    electronics_desktop:VERSION=2024.0113 -> ("electronics_desktop", "2024.0113", "")
+
+    認不得的修飾詞原樣留在 feature 名稱裡，寧可讓驗證器提出警告，
+    也不要在寫回檔案時把使用者原本的字句弄丟。
+    """
+    parts = _QUALIFIER_RE.split(token)
+    name = parts[0]
+    version = expdate = ""
+    # split 後為 [name, KEY, VALUE, KEY, VALUE, ...]
+    for key, value in zip(parts[1::2], parts[2::2]):
+        if key.upper() == "VERSION":
+            version = value
+        else:
+            expdate = value
+    return name, version, expdate
 
 
 def _logical_lines(text: str) -> list[tuple[str, str]]:
-    """回傳 [(內容, 該行前面累積的註解)]，並處理行末反斜線續行。"""
+    """回傳 [(內容, 該行前面累積的註解)]，並處理行末反斜線續行。
+
+    多行註解以換行保留原本的分行。接手的人常常在規則上面寫好幾行說明，
+    併成一行會讓那段說明在寫回檔案時變成無法閱讀的長條。
+    """
     result: list[tuple[str, str]] = []
     pending_comment: list[str] = []
     buffer = ""
@@ -55,11 +73,11 @@ def _logical_lines(text: str) -> list[tuple[str, str]]:
             buffer = stripped[:-1].rstrip()
             continue
 
-        result.append((stripped, " ".join(pending_comment).strip()))
+        result.append((stripped, "\n".join(pending_comment).strip()))
         pending_comment = []
 
     if buffer:
-        result.append((buffer, " ".join(pending_comment).strip()))
+        result.append((buffer, "\n".join(pending_comment).strip()))
     return result
 
 
@@ -128,9 +146,10 @@ class OptParser:
             count, feature_token, target_type = rest[0], rest[1], rest[2].upper()
             if target_type not in TARGET_TYPES:
                 return None
-            feature, expdate = _split_feature(feature_token)
+            feature, version, expdate = split_feature_token(feature_token)
             return AccessRule(keyword, feature, expdate, count,
-                              target_type, " ".join(rest[3:]), comment)
+                              target_type, " ".join(rest[3:]), comment,
+                              version=version)
 
         if arity == ARITY_FEATURE_TARGET:
             # KW feature TYPE name
@@ -139,9 +158,10 @@ class OptParser:
             feature_token, target_type = rest[0], rest[1].upper()
             if target_type not in TARGET_TYPES:
                 return None
-            feature, expdate = _split_feature(feature_token)
+            feature, version, expdate = split_feature_token(feature_token)
             return AccessRule(keyword, feature, expdate, "",
-                              target_type, " ".join(rest[2:]), comment)
+                              target_type, " ".join(rest[2:]), comment,
+                              version=version)
 
         if arity == ARITY_TARGET_ONLY:
             # KW TYPE name
@@ -157,8 +177,9 @@ class OptParser:
             # KW feature n
             if len(rest) < 2:
                 return None
-            feature, expdate = _split_feature(rest[0])
-            return AccessRule(keyword, feature, expdate, rest[1], "", "", comment)
+            feature, version, expdate = split_feature_token(rest[0])
+            return AccessRule(keyword, feature, expdate, rest[1], "", "", comment,
+                              version=version)
 
         return None
 

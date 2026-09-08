@@ -6,13 +6,27 @@
 """
 
 import os
+import sys
 
 import pytest
 
 tk = pytest.importorskip("tkinter")
 pytest.importorskip("ttkbootstrap")
 
-if not os.environ.get("DISPLAY"):
+
+def _has_display() -> bool:
+    """Windows 與 macOS 的視窗系統一定在，Linux 才需要看環境變數。
+
+    只判斷 DISPLAY 會讓整份測試在 Windows 上靜默跳過——DISPLAY 是 X11 的東西，
+    Windows 永遠沒有。而 allow_module_level 的跳過只會記成 1 筆，
+    數字看起來完全正常，實際上這 12 項從來沒跑過。
+    """
+    if sys.platform in ("win32", "darwin"):
+        return True
+    return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
+
+if not _has_display():
     pytest.skip("沒有顯示裝置，跳過 GUI 測試", allow_module_level=True)
 
 from ansys_license_group_tool import App  # noqa: E402
@@ -27,15 +41,87 @@ from ansys_opt import (  # noqa: E402
 from conftest import SAMPLE_LICENSE  # noqa: E402
 
 
-@pytest.fixture
-def app():
+def _withdraw_instead_of_centering(self):
+    """取代 App.center_window，把視窗收起來而不是置中。
+
+    這些測試檢查的是控制項狀態與資料流，不是外觀，沒有必要真的顯示視窗。
+    時機很講究：App.__init__ 最後呼叫的 center_window() 裡有 update_idletasks()，
+    那正是視窗被映射到螢幕的那一刻。等 App() 回傳後才 withdraw() 已經太晚，
+    畫面還是會閃一下。
+    """
+    self.withdraw()
+
+
+@pytest.fixture(scope="module")
+def _live_app():
+    """整份測試共用同一個 App。
+
+    ttkbootstrap 的 Style 是行程層級的單例，綁在第一個 root 上，
+    它自己的 window.py 就寫明「一個行程只能有一個 root，請重複使用」。
+    原本每個測試各建一次 App，撞到這條限制時的症狀不是穩定失敗而是偶發——
+    有時候乾淨過關，有時候整批 RuntimeError，取決於前一個 root 有沒有被回收乾淨。
+
+    建立失敗時要特別把半成品 root 清掉：App() 拋 TclError 時那個 root
+    已經存在但沒有人持有它，直接 skip 會讓它一直活著，
+    接下來每一個測試都會撞上單一 root 檢查，變成一路雪崩。
+    """
+    original_center = App.center_window
+    App.center_window = _withdraw_instead_of_centering
     try:
-        instance = App()
-    except tk.TclError as exc:
-        pytest.skip(f"無法建立視窗：{exc}")
+        try:
+            instance = App()
+        except tk.TclError as exc:
+            stranded = getattr(tk, "_default_root", None)
+            if stranded is not None:
+                try:
+                    stranded.destroy()
+                except tk.TclError:
+                    pass
+            pytest.skip(f"無法建立視窗：{exc}")
+    finally:
+        App.center_window = original_center
+
     instance.update_idletasks()
-    yield instance
+    assert not instance.winfo_viewable(), "視窗不該顯示在螢幕上"
+
+    # 每個測試開始前要還原成這組初始值
+    defaults = {
+        name: obj.get()
+        for name, obj in vars(instance).items()
+        if isinstance(obj, tk.Variable)
+    }
+
+    yield instance, defaults
     instance.destroy()
+
+
+@pytest.fixture
+def app(_live_app):
+    """共用的 App，但每個測試拿到的都是重設過的乾淨狀態。"""
+    instance, defaults = _live_app
+
+    instance.features.clear()
+    instance.groups.clear()
+    instance.rules.clear()
+    instance.global_opts.clear()
+    instance.server_info.clear()
+    instance._feat_choices.clear()
+    instance.license_file = ""
+    instance._issues = []
+
+    for name, value in defaults.items():
+        getattr(instance, name).set(value)
+
+    instance._refresh_feature_tree()
+    instance._refresh_feature_choices()
+    instance._refresh_group_listbox()
+    instance._refresh_rule_tree()
+    instance._refresh_global_tree()
+    instance._on_keyword_change()
+    instance._on_target_type_change()
+    instance.update_idletasks()
+
+    return instance
 
 
 def _load_sample_license(app, tmp_path):
@@ -178,3 +264,80 @@ def test_reread_command_is_shown(app):
     app.update_idletasks()
     assert "lmreread" in app.reread_cmd_var.get()
     assert "/tmp/sample.lic" in app.reread_cmd_var.get()
+
+
+# ── :VERSION= 修飾詞 ──
+
+TWO_POOL_LICENSE = """\
+SERVER lichost1 001122334455 1055
+VENDOR ansyslmd
+INCREMENT electronics_desktop ansyslmd 2022.0202 permanent 1 SIGN=0000
+INCREMENT electronics_desktop ansyslmd 2024.0113 permanent 2 SIGN=0000
+INCREMENT elec_solve_hfss ansyslmd 2024.0113 permanent 1 SIGN=0000
+"""
+
+
+def _load_two_pool_license(app, tmp_path):
+    path = tmp_path / "two_pool.txt"
+    path.write_text(TWO_POOL_LICENSE, encoding="utf-8")
+    app.lic_path_var.set(str(path))
+    app._parse_license()
+    app.update_idletasks()
+
+
+def test_multi_pool_feature_is_listed_once_per_version(app, tmp_path):
+    _load_two_pool_license(app, tmp_path)
+    desktop = [f for f in app.features if f.name == "electronics_desktop"]
+    assert len(desktop) == 2
+    # 下拉選單要分得出這兩筆，否則使用者只會看到兩個一模一樣的選項
+    labels = [l for l in app.feat_cb["values"] if "electronics_desktop" in l]
+    assert len(labels) == 2 and len(set(labels)) == 2
+
+
+def test_selecting_a_multi_pool_feature_fills_in_the_version(app, tmp_path):
+    _load_two_pool_license(app, tmp_path)
+    label = next(l for l in app.feat_cb["values"]
+                 if "electronics_desktop" in l and "2024.0113" in l)
+    app.feat_var.set(label)
+    app._on_feature_change()
+    assert app.version_var.get() == "2024.0113"
+
+    # 只有一個池的 Feature 不該帶入版本
+    label = next(l for l in app.feat_cb["values"] if "elec_solve_hfss" in l)
+    app.feat_var.set(label)
+    app._on_feature_change()
+    assert app.version_var.get() == ""
+
+
+def test_version_field_reaches_the_generated_rule(app, tmp_path):
+    _load_two_pool_license(app, tmp_path)
+    app.groups.append(Group("HOST_GROUP", "MAXWELL_ONLY", ["dsgnhost45"]))
+    app.kw_var.set("EXCLUDE")
+    app._on_keyword_change()
+    app.feat_var.set(next(l for l in app.feat_cb["values"]
+                          if "electronics_desktop" in l and "2024.0113" in l))
+    app._on_feature_change()
+    app.target_type_var.set("HOST_GROUP")
+    app.target_name_var.set("MAXWELL_ONLY")
+    app._add_rule()
+
+    assert app.rules[-1].version == "2024.0113"
+    app._refresh_preview()
+    assert ("EXCLUDE electronics_desktop:VERSION=2024.0113 "
+            "HOST_GROUP MAXWELL_ONLY") in app.preview_text.get("1.0", "end")
+
+
+def test_version_typed_into_the_feature_box_is_split_out(app, tmp_path):
+    """使用者直接把 feature:VERSION=x 打進 Feature 欄也要能正確拆開。"""
+    _load_two_pool_license(app, tmp_path)
+    app.groups.append(Group("HOST_GROUP", "G1", ["host1"]))
+    app.kw_var.set("EXCLUDE")
+    app._on_keyword_change()
+    app.feat_var.set("rdacis:VERSION=2024.0113")
+    app.version_var.set("")
+    app.target_type_var.set("HOST_GROUP")
+    app.target_name_var.set("G1")
+    app._add_rule()
+
+    assert app.rules[-1].feature == "rdacis"
+    assert app.rules[-1].version == "2024.0113"

@@ -52,14 +52,28 @@ def _feature_names(features: list[FeatureEntry]) -> set[str]:
     return {f.name for f in features}
 
 
-def _total_count(features: list[FeatureEntry], name: str, expdate: str = "") -> int | None:
-    """該 Feature 在授權檔中的總數；找不到回傳 None。"""
+def _total_count(features: list[FeatureEntry], name: str,
+                 expdate: str = "", version: str = "") -> int | None:
+    """該 Feature 在授權檔中的總數；找不到回傳 None。
+
+    有指定 version 或 expdate 時只算對應的那個授權池。
+    """
     matched = [f for f in features if f.name == name]
+    if version:
+        matched = [f for f in matched if f.version.lower() == version.lower()]
     if expdate:
         matched = [f for f in matched if f.expiry.lower() == expdate.lower()]
     if not matched:
         return None
     return sum(f.count for f in matched)
+
+
+def _versions_of(features: list[FeatureEntry]) -> dict[str, set[str]]:
+    """Feature 名稱 → 它在授權檔中出現過的版本集合。"""
+    versions: dict[str, set[str]] = {}
+    for feature in features:
+        versions.setdefault(feature.name, set()).add(feature.version)
+    return versions
 
 
 def validate(groups: list[Group],
@@ -79,6 +93,7 @@ def validate(groups: list[Group],
     issues += _check_lockout(rules)
     issues += _check_conflicts(rules)
     issues += _check_expdate(rules, features)
+    issues += _check_version(rules, features)
     issues += _check_timeouts(rules, globals_)
     issues += _check_case(groups, globals_)
 
@@ -179,7 +194,7 @@ def _check_counts(rules: list[AccessRule],
     for rule in rules:
         if rule.keyword not in ("RESERVE", "MAX") or not rule.count.isdigit():
             continue
-        total = _total_count(features, rule.feature, rule.expdate)
+        total = _total_count(features, rule.feature, rule.expdate, rule.version)
         if total is not None and int(rule.count) > total:
             issues.append(Issue(
                 ERROR, "COUNT_EXCEEDS",
@@ -188,15 +203,15 @@ def _check_counts(rules: list[AccessRule],
             ))
 
     # 同一 Feature 的 RESERVE 總和超過授權總數
-    reserved: dict[tuple[str, str], int] = {}
+    reserved: dict[tuple[str, str, str], int] = {}
     for rule in rules:
         if rule.keyword != "RESERVE" or not rule.count.isdigit():
             continue
-        key = (rule.feature, rule.expdate)
+        key = (rule.feature, rule.expdate, rule.version)
         reserved[key] = reserved.get(key, 0) + int(rule.count)
 
-    for (feature, expdate), amount in reserved.items():
-        total = _total_count(features, feature, expdate)
+    for (feature, expdate, version), amount in reserved.items():
+        total = _total_count(features, feature, expdate, version)
         if total is not None and amount > total:
             issues.append(Issue(
                 ERROR, "RESERVE_TOTAL_EXCEEDS",
@@ -327,6 +342,60 @@ def _check_expdate(rules: list[AccessRule],
                 f"到期日為：{', '.join(sorted(available))}。"
                 "沒有指定時會套用到哪一份並不確定，建議加上 :EXPDATE= 明確區分。",
             ))
+    return issues
+
+
+def _check_version(rules: list[AccessRule],
+                   features: list[FeatureEntry]) -> list[Issue]:
+    """檢查 :VERSION= 的用法。
+
+    同一個 Feature 出現在多個授權池是很常見的事（買了 Maxwell，後來又買
+    Enterprise，兩份都含 electronics_desktop）。兩份都是 permanent 時
+    EXPDATE 分不開它們，只有 VERSION 可以。沒指定版本的規則會套用到全部的池，
+    這正是「想擋 Enterprise，結果連自己那份也一起擋掉」的來源。
+    """
+    if not features:
+        return []
+    issues: list[Issue] = []
+    versions = _versions_of(features)
+
+    for rule in rules:
+        if not rule.feature or not rule.version:
+            continue
+        available = versions.get(rule.feature)
+        if not available:
+            continue  # feature 本身不存在，_check_features 已經報過了
+        if rule.version not in available:
+            issues.append(Issue(
+                WARNING, "VERSION_UNKNOWN",
+                f"「{rule.feature}」沒有版本為 {rule.version} 的授權。",
+                f"授權檔中的版本為：{', '.join(sorted(available))}。"
+                "VERSION 的值必須與授權檔的 INCREMENT 行完全一致。",
+            ))
+
+    # 沒指定版本、而該 Feature 確實有多個池的規則，逐個 Feature 彙總提醒一次
+    ambiguous: dict[str, list[str]] = {}
+    for rule in rules:
+        if not rule.feature or rule.version:
+            continue
+        if rule.keyword not in ("EXCLUDE", "INCLUDE", "RESERVE", "MAX",
+                                "EXCLUDE_BORROW", "INCLUDE_BORROW"):
+            continue
+        available = versions.get(rule.feature)
+        if not available or len(available) < 2:
+            continue
+        ambiguous.setdefault(rule.feature, []).append(rule.keyword)
+
+    for feature, keywords in sorted(ambiguous.items()):
+        available = sorted(versions[feature])
+        issues.append(Issue(
+            INFO, "VERSION_NOT_SPECIFIED",
+            f"「{feature}」有 {len(available)} 個版本的授權，"
+            f"但 {'/'.join(sorted(set(keywords)))} 規則沒有指定 VERSION。",
+            f"版本為：{', '.join(available)}。"
+            "這條規則會同時套用到全部的授權池；"
+            "只想針對其中一個池時，請填入 :VERSION=。",
+        ))
     return issues
 
 

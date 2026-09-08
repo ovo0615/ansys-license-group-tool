@@ -10,7 +10,7 @@
   並把 Feature 代碼翻成看得懂的產品名稱（`meba` → Ansys Mechanical Enterprise Solver）
 - 視覺化建立 GROUP（使用者群組）與 HOST_GROUP（主機群組）
 - 支援 11 個 FlexNet 規則關鍵字與 7 種對象類型，含閒置回收（`TIMEOUT`）與 IP 網段（`INTERNET`）
-- 支援 `:EXPDATE=` 語法（多組不同到期日授權），選到多重到期日的 Feature 時自動帶入
+- 支援 `:VERSION=` 與 `:EXPDATE=` 語法，同名 Feature 分屬多個授權池時自動帶入足以區分它們的修飾詞
 - **匯出前自動檢查**：數量超過授權總數、指向未定義的群組、HPC 增量混用、
   INCLUDE 白名單把人鎖在外面…等 20 種常見設定錯誤
 - 可**載入既有的 `ansyslmd.opt`** 修改後再匯出，不必從頭重建
@@ -99,6 +99,8 @@ your_code,你們的產品名稱,分類
 ```
 
 點「匯入對照表 CSV…」載入即可，內容會存到使用者設定目錄，下次啟動自動套用。
+`exampleseature_map_electronics.csv` 是 Electronics 系列（AEDT／HFSS／SIwave／Maxwell／
+SpaceClaim）的現成對照表，可以直接匯入。
 
 > 權威來源是 Ansys 原廠的 **Product to License Feature Mapping** 文件
 > （原廠入口網站 → Downloads → Installation and Licensing Help Tutorials →
@@ -167,8 +169,9 @@ your_code,你們的產品名稱,分類
 |---|---|
 | 數量 | RESERVE / MAX 超過授權總數；同一 Feature 的 RESERVE 總和把授權全部保留光 |
 | 對象 | 規則指向未定義的群組；同一成員被放進兩個同類型群組；空群組 |
-| Feature | 名稱不在授權檔中（會提示最接近的正確拼字）；EXPDATE 與授權檔對不上 |
+| Feature | 名稱不在授權檔中（會提示最接近的正確拼字）；EXPDATE 或 VERSION 與授權檔對不上 |
 | 多重到期日 | 同一 Feature 有多組到期日卻沒指定 `:EXPDATE=` |
+| 多個授權池 | 同一 Feature 有多個版本卻沒指定 `:VERSION=`（規則會套用到全部的池） |
 | HPC | `anshpc` 與 `anshpc_pack` 混用；LS-DYNA 用不到標準 HPC 增量；HPC Pack 以人為單位 |
 | 存取控制 | INCLUDE / INCLUDEALL 把名單外的人全部鎖在外面；INCLUDE 與 EXCLUDE 互相衝突 |
 | 大小寫 | 成員名稱只差大小寫；有大小寫混用但沒開 GROUPCASEINSENSITIVE |
@@ -270,6 +273,7 @@ ansys-license-group-tool\
 │   ├── feature_map.py            # Feature 代碼 → 產品名稱
 │   ├── lmutil.py                 # lmreread / lmstat 指令包裝
 │   └── data\feature_map.json     # 內建對照表種子檔
+├── examples\                     # 現成的 Feature 對照表 CSV
 ├── tests\                        # 單元測試與 GUI 煙霧測試
 ├── run_tool.bat                  # 一鍵啟動（BAT）
 ├── start.ps1                     # 啟動邏輯（含 Python 探測）

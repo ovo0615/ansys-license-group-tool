@@ -146,3 +146,23 @@ def test_export_backs_up_existing_file(tmp_path):
     with open(backup, encoding="utf-8") as fh:
         assert fh.read() == "原本的內容\n"
     assert target.read_text(encoding="utf-8") == "新的內容\n"
+
+
+def test_multi_line_comments_keep_their_line_breaks():
+    """接手的人常在規則上面寫好幾行說明，載入再匯出不該把它壓成一長條。"""
+    text = (
+        "# 第一行說明\n"
+        "# 第二行說明\n"
+        "# 第三行說明\n"
+        "EXCLUDE hfss HOST_GROUP LabHosts\n"
+    )
+    doc = OptParser.parse_text(text)
+    assert doc.rules[0].comment == "第一行說明\n第二行說明\n第三行說明"
+
+    out = OptGenerator.generate(doc.groups, doc.rules, doc.globals,
+                                keep_comments=True)
+    body = [l for l in out.splitlines() if "行說明" in l or l.startswith("EXCLUDE")]
+    assert body == [
+        "# 第一行說明", "# 第二行說明", "# 第三行說明",
+        "EXCLUDE hfss HOST_GROUP LabHosts",
+    ]

@@ -22,7 +22,7 @@ from .model import (
     spec_for,
 )
 from .opt_generator import OptGenerator, render_group, render_rule
-from .opt_parser import OptParser
+from .opt_parser import OptParser, split_feature_token
 from .validator import ERROR, INFO, WARNING, Issue, validate
 
 __all__ = [
@@ -30,5 +30,6 @@ __all__ = [
     "Group", "Issue", "LicenseParser", "LmUtil", "OptDocument", "OptGenerator",
     "OptParser", "ERROR", "WARNING", "INFO", "GLOBAL_SPECS", "KEYWORD_SPECS",
     "TARGET_TYPES", "needs_count", "needs_feature", "needs_target",
-    "render_group", "render_rule", "spec_for", "validate",
+    "render_group", "render_rule", "spec_for", "split_feature_token",
+    "validate",
 ]

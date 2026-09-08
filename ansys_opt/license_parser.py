@@ -31,8 +31,11 @@ class LicenseParser:
         # 行末的反斜線代表續行，先合併成單行再解析
         joined = re.sub(r"\\\s*\n\s*", " ", content)
 
-        # 同一個 (name, expiry) 可能有多行 INCREMENT，數量要加總
-        totals: dict[tuple[str, str], FeatureEntry] = {}
+        # 同一個 (name, version, expiry) 可能有多行 INCREMENT，數量要加總。
+        # 版本一定要進 key：同名 Feature 常常在兩個授權池裡各有一份，
+        # 而兩份都是 permanent 時只有版本能區分它們。把它們併成一筆，
+        # 畫面上就再也看不出「這個 Feature 有兩個池」。
+        totals: dict[tuple[str, str, str], FeatureEntry] = {}
         for match in _INCREMENT_RE.finditer(joined):
             name, version, expiry, count = (
                 match.group(1), match.group(2), match.group(3), int(match.group(4))
@@ -46,7 +49,7 @@ class LicenseParser:
             issued_match = _ISSUED_RE.search(line)
             issued = issued_match.group(1) if issued_match else ""
 
-            key = (name, expiry)
+            key = (name, version, expiry)
             if key in totals:
                 totals[key].count += count
             else:
@@ -55,7 +58,8 @@ class LicenseParser:
                     count=count, issued=issued,
                 )
 
-        features = sorted(totals.values(), key=lambda f: (f.name, f.expiry))
+        features = sorted(totals.values(),
+                          key=lambda f: (f.name, f.version, f.expiry))
         return server_info, features
 
     @staticmethod

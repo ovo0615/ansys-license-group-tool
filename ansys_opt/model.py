@@ -41,6 +41,9 @@ class AccessRule:
     """單一 options file 規則行。
 
     依 keyword 的 arity 決定哪些欄位有意義，見 KEYWORD_SPECS。
+
+    version 語意上屬於 feature 那一組，但刻意排在最後：這個欄位是後來補的，
+    放中間會讓既有的位置引數呼叫整排錯位。新程式請一律用具名引數。
     """
     keyword: str
     feature: str = ""        # arity 含 feature 時使用
@@ -49,6 +52,7 @@ class AccessRule:
     target_type: str = ""    # USER / HOST / DISPLAY / GROUP / HOST_GROUP / INTERNET / PROJECT
     target_name: str = ""
     comment: str = ""
+    version: str = ""        # 附加 :VERSION=版本，用來區分同名 Feature 的不同授權池
 
 
 @dataclass

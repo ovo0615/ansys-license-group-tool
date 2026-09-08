@@ -20,7 +20,15 @@ HEADER_MARK = "# ansyslmd.opt"
 
 
 def _feature_token(rule: AccessRule) -> str:
+    """組出 feature[:VERSION=x][:EXPDATE=y]。
+
+    同一個 Feature 常常同時存在於數個授權池（例如 Maxwell 那份與 Enterprise
+    那份都含 electronics_desktop）。兩份都是 permanent 時，EXPDATE 分不開它們，
+    只有 VERSION 可以。
+    """
     token = rule.feature
+    if rule.version:
+        token += f":VERSION={rule.version}"
     if rule.expdate:
         token += f":EXPDATE={rule.expdate}"
     return token
@@ -43,6 +51,11 @@ def render_rule(rule: AccessRule) -> str:
     if spec.arity == ARITY_FEATURE_NUMBER:
         return f"{rule.keyword} {_feature_token(rule)} {rule.count}"
     raise ValueError(f"未知的語法形狀：{spec.arity}")
+
+
+def _comment_lines(comment: str) -> list[str]:
+    """把可能有多行的註解逐行加上 #。"""
+    return [f"# {line}".rstrip() for line in comment.splitlines()]
 
 
 def render_group(group: Group) -> str:
@@ -87,7 +100,7 @@ class OptGenerator:
                 lines += ["# ── 全域設定 ──", ""]
             for opt in globals_:
                 if keep_comments and opt.comment:
-                    lines.append(f"# {opt.comment}")
+                    lines += _comment_lines(opt.comment)
                 lines.append(render_global(opt))
             lines.append("")
 
@@ -96,7 +109,7 @@ class OptGenerator:
                 lines += ["# ── 群組定義 ──", ""]
             for group in groups:
                 if keep_comments and group.comment:
-                    lines.append(f"# {group.comment}")
+                    lines += _comment_lines(group.comment)
                 lines.append(render_group(group))
             lines.append("")
 
@@ -105,7 +118,7 @@ class OptGenerator:
                 lines += ["# ── 存取規則 ──", ""]
             for rule in rules:
                 if keep_comments and rule.comment:
-                    lines.append(f"# {rule.comment}")
+                    lines += _comment_lines(rule.comment)
                 lines.append(render_rule(rule))
 
         # 去掉結尾多餘空行，保留單一換行結尾

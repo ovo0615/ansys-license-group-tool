@@ -38,6 +38,7 @@ from ansys_opt import (
     needs_target,
     render_rule,
     spec_for,
+    split_feature_token,
     validate,
 )
 
@@ -356,6 +357,12 @@ class App(tbs.Window):
         self.count_entry = tbs.Entry(row2, textvariable=self.count_var,
                                      font=self.FONT_MONO, width=8)
         self.count_entry.pack(side=LEFT, padx=(4, 16))
+
+        tbs.Label(row2, text=":VERSION=", font=self.FONT_LABEL).pack(side=LEFT)
+        self.version_var = tk.StringVar()
+        self.version_entry = tbs.Entry(row2, textvariable=self.version_var,
+                                       font=self.FONT_MONO, width=12)
+        self.version_entry.pack(side=LEFT, padx=(2, 16))
 
         tbs.Label(row2, text=":EXPDATE=", font=self.FONT_LABEL).pack(side=LEFT)
         self.expdate_var = tk.StringVar()
@@ -685,7 +692,7 @@ class App(tbs.Window):
             label = entry.name
             if entry.product:
                 label += f" — {entry.product}"
-            label += f"  ({entry.expiry}, ×{entry.count})"
+            label += f"  (v{entry.version}, {entry.expiry}, ×{entry.count})"
             self._feat_choices[label] = entry
             labels.append(label)
         self.feat_cb["values"] = labels
@@ -908,6 +915,8 @@ class App(tbs.Window):
             state="normal" if needs_feature(keyword) else "disabled")
         self.expdate_entry.configure(
             state="normal" if needs_feature(keyword) else "disabled")
+        self.version_entry.configure(
+            state="normal" if needs_feature(keyword) else "disabled")
         self.count_entry.configure(
             state="normal" if needs_count(keyword) else "disabled")
         self.target_type_cb.configure(
@@ -925,11 +934,19 @@ class App(tbs.Window):
                 self.count_var.set("7200" if spec.count_label == "秒數" else "1")
 
     def _on_feature_change(self, event=None):
-        """選了 Feature 之後，若同名有多個到期日就自動帶入 EXPDATE。"""
+        """選了 Feature 之後，同名有多份授權時自動帶入足以區分它們的修飾詞。
+
+        同名的多份授權可能只差在版本（買了兩次，兩份都是 permanent），
+        這時只有 VERSION 分得開；差在到期日的則用 EXPDATE。
+        """
         entry = self._feat_choices.get(self.feat_var.get())
         if not entry:
             return
         same_name = [f for f in self.features if f.name == entry.name]
+        if len(same_name) > 1 and len({f.version for f in same_name}) > 1:
+            self.version_var.set(entry.version)
+        else:
+            self.version_var.set("")
         if len(same_name) > 1 and entry.expiry != "permanent":
             self.expdate_var.set(entry.expiry)
         else:
@@ -952,20 +969,31 @@ class App(tbs.Window):
         elif not names and target_type in ("GROUP", "HOST_GROUP"):
             self.target_name_var.set("")
 
-    def _selected_feature_name(self) -> str:
+    def _selected_feature_name(self) -> tuple[str, str, str]:
+        """回傳 (feature, version, expdate)。
+
+        手動輸入時允許直接打完整的 feature:VERSION=x 形式，這裡把修飾詞拆出來，
+        免得整串被當成 Feature 名稱、後續檢查也對不上授權檔。
+        """
         label = self.feat_var.get().strip()
         if not label:
-            return ""
+            return "", "", ""
         entry = self._feat_choices.get(label)
         if entry:
-            return entry.name
+            return entry.name, "", ""
         # 允許手動輸入沒被解析到的 Feature 名稱
-        return label.split()[0]
+        return split_feature_token(label.split()[0])
 
     def _add_rule(self):
         keyword = self.kw_var.get()
-        feature = self._selected_feature_name() if needs_feature(keyword) else ""
-        expdate = self.expdate_var.get().strip() if needs_feature(keyword) else ""
+        feature, typed_version, typed_expdate = (
+            self._selected_feature_name() if needs_feature(keyword)
+            else ("", "", ""))
+        # 欄位裡填的優先；沒填才採用直接打在 Feature 欄位裡的修飾詞
+        version = (self.version_var.get().strip() if needs_feature(keyword)
+                   else "") or typed_version
+        expdate = (self.expdate_var.get().strip() if needs_feature(keyword)
+                   else "") or typed_expdate
         count = self.count_var.get().strip() if needs_count(keyword) else ""
         target_type = self.target_type_var.get() if needs_target(keyword) else ""
         target_name = self.target_name_var.get().strip() if needs_target(keyword) else ""
@@ -987,6 +1015,7 @@ class App(tbs.Window):
             keyword=keyword, feature=feature, expdate=expdate, count=count,
             target_type=target_type, target_name=target_name,
             comment=self.rule_comment_var.get().strip(),
+            version=version,
         ))
         self.rule_comment_var.set("")
         self._refresh_rule_tree()
