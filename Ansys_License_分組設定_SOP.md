@@ -32,15 +32,20 @@ options file 檔名固定為 **`ansyslmd.opt`**，若資料夾內沒有這個檔
 
 **放在預設位置就會被自動讀取，不需要去動 `ansyslmd.lic`。**
 
-只有在 opt 檔必須放到別的資料夾（例如與授權檔分開管理）時，才要在 `ansyslmd.lic` 的
-**第二行**（`SERVER` 行的下一行）加入 `options=` 指定路徑：
+要明確指定 opt 檔（例如放到別的資料夾），在授權檔的 **`VENDOR` 行尾端**加上 `OPTIONS=`：
 
 ```
-options="C:\LicenseAdmin\ansyslmd.opt"
+SERVER lichost1 001122334455 1055
+VENDOR ansyslmd OPTIONS="C:\Program Files\ANSYS Inc\Shared Files\Licensing\license_files\ansyslmd.opt"
+USE_SERVER
 ```
 
-路徑含空白必須用雙引號包起來。兩種做法效果相同，**但能不動 `ansyslmd.lic` 就不要動**
-——手動編輯授權檔是 `-13`（讀不到 SERVER 行）最常見的來源。
+| 注意 | 說明 |
+|---|---|
+| 寫在 `VENDOR` 行上 | **不能**另起一行只寫 `options=…`，那不是合法語法 |
+| 路徑含空白 | 整段路徑用雙引號包起來 |
+| 只改這一行 | `VENDOR` 行不在簽章範圍內，可以改；`INCREMENT` 行一個字都不能動，否則授權失效 |
+| 先備份 | 手動編輯授權檔是 `-13`（讀不到 SERVER 行）最常見的來源 |
 
 ## Step 2：備份現有設定
 
